@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>GIL — Entity Relationship Diagram</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --c-bg: #FAFAF7;
+    --c-canvas: #FFFFFF;
+    --c-primary: #141E32;
+    --c-primary-soft: #1E2D4A;
+    --c-accent: #C9A227;
+    --c-accent-soft: #E6C75A;
+    --c-text: #1A1F2C;
+    --c-muted: #5A6478;
+    --c-line: #D8DDE6;
+    --c-line-soft: #E8EBF1;
+
+    /* Domain colors (low saturation fills) */
+    --d-auth: #EFF6FF;       --d-auth-border: #1E40AF;
+    --d-gl:   #FFF7ED;       --d-gl-border:   #92400E;
+    --d-arap: #F0FDF4;       --d-arap-border: #065F46;
+    --d-inv:  #F5F3FF;       --d-inv-border:  #5B21B6;
+    --d-bud:  #FEFCE8;       --d-bud-border:  #854D0E;
+    --d-ops:  #FDF2F8;       --d-ops-border:  #9D174D;
+  }
+
+  @page {
+    size: 1400px 2950px;
+    margin: 0;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--c-bg);
+    font-family: 'Inter', sans-serif;
+    color: var(--c-text);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .erd-canvas {
+    position: relative;
+    width: 1400px;
+    background: var(--c-canvas);
+    margin: 0 auto;
+    padding: 60px 60px 80px 60px;
+    box-sizing: border-box;
+  }
+
+  /* ========== HEADER ========== */
+  .erd-header {
+    position: relative;
+    padding: 24px 32px 28px 32px;
+    background: var(--c-primary);
+    color: white;
+    border-left: 6px solid var(--c-accent);
+    margin-bottom: 40px;
+  }
+  .erd-header .kicker {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--c-accent);
+    margin: 0 0 6px 0;
+  }
+  .erd-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px;
+    font-weight: 900;
+    margin: 0;
+    line-height: 1.05;
+    letter-spacing: -1.5px;
+  }
+  .erd-header .subtitle {
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+    margin: 10px 0 0 0;
+    font-weight: 400;
+  }
+  .erd-header .summary {
+    display: flex;
+    gap: 32px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--c-accent);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+  }
+
+  /* ========== LEGEND ========== */
+  .legend {
+    display: flex;
+    gap: 28px;
+    padding: 16px 24px;
+    background: #F4F2EC;
+    border: 1px solid var(--c-line);
+    margin-bottom: 36px;
+    font-size: 11px;
+    color: var(--c-muted);
+    align-items: center;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .legend-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .badge-pk { background: var(--c-accent); color: white; }
+  .badge-fk { background: var(--c-primary-soft); color: white; }
+  .legend-arrow { color: var(--c-accent); font-weight: 700; }
+  .legend-sep { width: 1px; height: 16px; background: var(--c-line); }
+
+  /* ========== DOMAIN SECTIONS ========== */
+  .domain {
+    margin-bottom: 36px;
+    page-break-inside: avoid;
+  }
+  .domain-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--c-primary);
+  }
+  .domain-num {
+    width: 36px;
+    height: 36px;
+    background: var(--c-primary);
+    color: var(--c-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 900;
+    border-radius: 2px;
+  }
+  .domain-title {
+    flex: 1;
+  }
+  .domain-title h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--c-primary);
+    letter-spacing: 0.2px;
+  }
+  .domain-title .desc {
+    font-size: 11px;
+    color: var(--c-muted);
+    margin-top: 2px;
+  }
+  .domain-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--c-muted);
+    background: #F4F2EC;
+    padding: 4px 10px;
+    border-radius: 2px;
+  }
+
+  /* ========== TABLES GRID ========== */
+  .tables-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .tables-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .tables-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+  /* ========== TABLE CARD ========== */
+  .table-card {
+    background: white;
+    border: 1px solid var(--c-line);
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(20,30,50,0.03);
+  }
+  .table-card.auth { border-top: 3px solid var(--d-auth-border); }
+  .table-card.gl   { border-top: 3px solid var(--d-gl-border); }
+  .table-card.arap { border-top: 3px solid var(--d-arap-border); }
+  .table-card.inv  { border-top: 3px solid var(--d-inv-border); }
+  .table-card.bud  { border-top: 3px solid var(--d-bud-border); }
+  .table-card.ops  { border-top: 3px solid var(--d-ops-border); }
+
+  .table-name {
+    padding: 9px 12px 8px 12px;
+    background: var(--c-primary);
+    color: white;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .table-card.auth .table-name { background: var(--d-auth-border); }
+  .table-card.gl   .table-name { background: var(--d-gl-border); }
+  .table-card.arap .table-name { background: var(--d-arap-border); }
+  .table-card.inv  .table-name { background: var(--d-inv-border); }
+  .table-card.bud  .table-name { background: var(--d-bud-border); }
+  .table-card.ops  .table-name { background: var(--d-ops-border); }
+
+  .table-name .tname {
+    flex: 1;
+  }
+  .table-name .tdesc {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0.75;
+    padding-left: 8px;
+  }
+
+  .table-body {
+    padding: 0;
+  }
+  .field {
+    display: flex;
+    align-items: center;
+    padding: 5px 12px;
+    font-size: 10px;
+    line-height: 1.4;
+    border-bottom: 1px solid var(--c-line-soft);
+    gap: 6px;
+  }
+  .field:last-child { border-bottom: none; }
+
+  .field .fname {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--c-text);
+    flex: 1;
+    min-width: 0;
+  }
+  .field .ftype {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--c-muted);
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .field .fbadge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 2px;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+  }
+  .field.pk .fbadge { background: var(--c-accent); color: white; }
+  .field.fk .fbadge { background: var(--c-primary-soft); color: white; }
+  .field.pk .fname { font-weight: 700; color: var(--c-primary); }
+
+  .field.fk {
+    background: #FBF9F2;
+  }
+  .field.fk .fname::after {
+    content: attr(data-ref);
+    display: block;
+    font-size: 8.5px;
+    color: var(--c-accent);
+    font-weight: 500;
+    font-style: italic;
+    font-family: 'Inter', sans-serif;
+    margin-top: 1px;
+    letter-spacing: 0.2px;
+  }
+
+  /* ========== RELATIONSHIP MAP ========== */
+  .relmap {
+    background: #F4F2EC;
+    border: 1px solid var(--c-line);
+    padding: 24px 28px;
+    margin-top: 20px;
+  }
+  .relmap h3 {
+    margin: 0 0 14px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--c-primary);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--c-line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .relmap h3 .count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--c-muted);
+  }
+  .relmap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 28px;
+  }
+  .rel-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--c-text);
+    padding: 3px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .rel-item .from { color: var(--c-primary); font-weight: 600; }
+  .rel-item .arrow { color: var(--c-accent); font-weight: 700; }
+  .rel-item .to { color: var(--c-primary-soft); }
+  .rel-item .card {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: var(--c-muted);
+    background: white;
+    padding: 1px 5px;
+    border-radius: 2px;
+    margin-left: auto;
+    border: 1px solid var(--c-line);
+  }
+
+  /* ========== FOOTER ========== */
+  .erd-footer {
+    margin-top: 36px;
+    padding-top: 18px;
+    border-top: 1px solid var(--c-line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: var(--c-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .erd-footer .doc-id {
+    color: var(--c-accent);
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="erd-canvas">
+
+  <!-- ===== HEADER ===== -->
+  <header class="erd-header">
+    <p class="kicker">Database Schema · v1.0</p>
+    <h1>GIL — Entity Relationship Diagram</h1>
+    <p class="subtitle">Skema database PostgreSQL untuk platform akuntansi enterprise GIL · 29 tabel · 6 domain</p>
+    <div class="summary">
+      <div class="stat"><span class="stat-num">29</span><span class="stat-label">Tabel</span></div>
+      <div class="stat"><span class="stat-num">6</span><span class="stat-label">Domain</span></div>
+      <div class="stat"><span class="stat-num">40+</span><span class="stat-label">Relasi</span></div>
+      <div class="stat"><span class="stat-num">PG 16</span><span class="stat-label">Database</span></div>
+    </div>
+  </header>
+
+  <!-- ===== LEGEND ===== -->
+  <div class="legend">
+    <div class="legend-item"><span class="legend-badge badge-pk">PK</span> Primary Key</div>
+    <div class="legend-item"><span class="legend-badge badge-fk">FK</span> Foreign Key</div>
+    <div class="legend-item"><span class="legend-arrow">→</span> References table.field</div>
+    <div class="legend-sep"></div>
+    <div class="legend-item"><span style="color: var(--c-muted)">Cardinality:</span> <span style="color: var(--c-primary); font-weight: 600;">1:N</span> one-to-many &nbsp;·&nbsp; <span style="color: var(--c-primary); font-weight: 600;">N:M</span> many-to-many</div>
+  </div>
+
+  <!-- ===== DOMAIN 1: AUTH & RBAC ===== -->
+  <section class="domain">
+    <div class="domain-header">
+      <div class="domain-num">1</div>
+      <div class="domain-title">
+        <h2>Auth & RBAC</h2>
+        <div class="desc">Manajemen user, role, permission, department scope</div>
+      </div>
+      <div class="domain-count">6 tables</div>
+    </div>
+    <div class="tables-grid cols-2">
+
+      <div class="table-card auth">
+        <div class="table-name"><span class="tname">users</span><span class="tdesc">akun login</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">email</span><span class="ftype">VARCHAR(255)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">password_hash</span><span class="ftype">VARCHAR(255)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">name</span><span class="ftype">VARCHAR(120)</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ departments.id">department_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">is_active</span><span class="ftype">BOOLEAN</span></div>
+        </div>
+      </div>
+
+      <div class="table-card auth">
+        <div class="table-name"><span class="tname">roles</span><span class="tdesc">daftar peran</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">code</span><span class="ftype">VARCHAR(50)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">name</span><span class="ftype">VARCHAR(120)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">description</span><span class="ftype">TEXT</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">is_system</span><span class="ftype">BOOLEAN</span></div>
+        </div>
+      </div>
+
+      <div class="table-card auth">
+        <div class="table-name"><span class="tname">permissions</span><span class="tdesc">hak aksi atomik</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">code</span><span class="ftype">VARCHAR(80)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">module</span><span class="ftype">VARCHAR(40)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">action</span><span class="ftype">VARCHAR(40)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">description</span><span class="ftype">TEXT</span></div>
+        </div>
+      </div>
+
+      <div class="table-card auth">
+        <div class="table-name"><span class="tname">departments</span><span class="tdesc">hierarki departemen</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">code</span><span class="ftype">VARCHAR(30)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">name</span><span class="ftype">VARCHAR(120)</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ departments.id (self)">parent_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ users.id">head_user_id</span><span class="ftype">UUID</span></div>
+        </div>
+      </div>
+
+      <div class="table-card auth">
+        <div class="table-name"><span class="tname">role_permissions</span><span class="tdesc">junction N:M</span></div>
+        <div class="table-body">
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ roles.id">role_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ permissions.id">permission_id</span><span class="ftype">UUID</span></div>
+        </div>
+      </div>
+
+      <div class="table-card auth">
+        <div class="table-name"><span class="tname">user_roles</span><span class="tdesc">user↔role + scope</span></div>
+        <div class="table-body">
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ users.id">user_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ roles.id">role_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ departments.id">department_scope_id</span><span class="ftype">UUID</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== DOMAIN 2: GL ===== -->
+  <section class="domain">
+    <div class="domain-header">
+      <div class="domain-num">2</div>
+      <div class="domain-title">
+        <h2>General Ledger</h2>
+        <div class="desc">Buku besar, akun, periode fiskal, jurnal</div>
+      </div>
+      <div class="domain-count">4 tables</div>
+    </div>
+    <div class="tables-grid cols-2">
+
+      <div class="table-card gl">
+        <div class="table-name"><span class="tname">accounts</span><span class="tdesc">chart of account</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">code</span><span class="ftype">VARCHAR(30)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">name</span><span class="ftype">VARCHAR(180)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">type</span><span class="ftype">VARCHAR(20)</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ accounts.id (self)">parent_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ departments.id">department_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">currency</span><span class="ftype">CHAR(3)</span></div>
+        </div>
+      </div>
+
+      <div class="table-card gl">
+        <div class="table-name"><span class="tname">fiscal_periods</span><span class="tdesc">periode akuntansi</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">name</span><span class="ftype">VARCHAR(30)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">start_date</span><span class="ftype">DATE</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">end_date</span><span class="ftype">DATE</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">status</span><span class="ftype">VARCHAR(20)</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ fiscal_years.id">fiscal_year_id</span><span class="ftype">UUID</span></div>
+        </div>
+      </div>
+
+      <div class="table-card gl">
+        <div class="table-name"><span class="tname">journals</span><span class="tdesc">header jurnal</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">number</span><span class="ftype">VARCHAR(40)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">date</span><span class="ftype">DATE</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ fiscal_periods.id">period_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">description</span><span class="ftype">TEXT</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">status</span><span class="ftype">VARCHAR(20)</span></div>
+        </div>
+      </div>
+
+      <div class="table-card gl">
+        <div class="table-name"><span class="tname">journal_lines</span><span class="tdesc">baris debit/kredit</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ journals.id">journal_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ accounts.id">account_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">debit</span><span class="ftype">NUMERIC(18,2)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">credit</span><span class="ftype">NUMERIC(18,2)</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ departments.id">department_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">project_id</span><span class="ftype">UUID</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== DOMAIN 3: AR/AP ===== -->
+  <section class="domain">
+    <div class="domain-header">
+      <div class="domain-num">3</div>
+      <div class="domain-title">
+        <h2>Accounts Receivable / Payable</h2>
+        <div class="desc">Master customer/supplier, faktur, penerimaan/pembayaran</div>
+      </div>
+      <div class="domain-count">6 tables</div>
+    </div>
+    <div class="tables-grid cols-3">
+
+      <div class="table-card arap">
+        <div class="table-name"><span class="tname">customers</span><span class="tdesc">master pelanggan</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">code</span><span class="ftype">VARCHAR(30)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">name</span><span class="ftype">VARCHAR(180)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">credit_limit</span><span class="ftype">NUMERIC(18,2)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">term_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ accounts.id">ar_account_id</span><span class="ftype">UUID</span></div>
+        </div>
+      </div>
+
+      <div class="table-card arap">
+        <div class="table-name"><span class="tname">suppliers</span><span class="tdesc">master pemasok</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">code</span><span class="ftype">VARCHAR(30)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">name</span><span class="ftype">VARCHAR(180)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">term_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ accounts.id">ap_account_id</span><span class="ftype">UUID</span></div>
+        </div>
+      </div>
+
+      <div class="table-card arap">
+        <div class="table-name"><span class="tname">ar_invoices</span><span class="tdesc">faktur penjualan kredit</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">number</span><span class="ftype">VARCHAR(40)</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ customers.id">customer_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">date, due_date</span><span class="ftype">DATE</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">amount</span><span class="ftype">NUMERIC(18,2)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">status</span><span class="ftype">VARCHAR(20)</span></div>
+        </div>
+      </div>
+
+      <div class="table-card arap">
+        <div class="table-name"><span class="tname">ap_invoices</span><span class="tdesc">faktur pembelian kredit</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">number</span><span class="ftype">VARCHAR(40)</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ suppliers.id">supplier_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">date, due_date</span><span class="ftype">DATE</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">amount</span><span class="ftype">NUMERIC(18,2)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">status</span><span class="ftype">VARCHAR(20)</span></div>
+        </div>
+      </div>
+
+      <div class="table-card arap">
+        <div class="table-name"><span class="tname">receipts</span><span class="tdesc">penerimaan pembayaran</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">number</span><span class="ftype">VARCHAR(40)</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ customers.id">customer_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">date, amount</span><span class="ftype">DATE/NUM</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">method</span><span class="ftype">VARCHAR(20)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">bank_account_id</span><span class="ftype">UUID</span></div>
+        </div>
+      </div>
+
+      <div class="table-card arap">
+        <div class="table-name"><span class="tname">payments</span><span class="tdesc">pembayaran hutang</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">number</span><span class="ftype">VARCHAR(40)</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ suppliers.id">supplier_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">date, amount</span><span class="ftype">DATE/NUM</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">method</span><span class="ftype">VARCHAR(20)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">bank_account_id</span><span class="ftype">UUID</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== DOMAIN 4: INVENTORY ===== -->
+  <section class="domain">
+    <div class="domain-header">
+      <div class="domain-num">4</div>
+      <div class="domain-title">
+        <h2>Inventory</h2>
+        <div class="desc">Item, gudang, kartu stok, Bill of Material</div>
+      </div>
+      <div class="domain-count">5 tables</div>
+    </div>
+    <div class="tables-grid cols-3">
+
+      <div class="table-card inv">
+        <div class="table-name"><span class="tname">items</span><span class="tdesc">master barang</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">code</span><span class="ftype">VARCHAR(40)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">name</span><span class="ftype">VARCHAR(180)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">type, unit</span><span class="ftype">VARCHAR(20)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">valuation_method</span><span class="ftype">VARCHAR(20)</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ accounts.id">default_account_id</span><span class="ftype">UUID</span></div>
+        </div>
+      </div>
+
+      <div class="table-card inv">
+        <div class="table-name"><span class="tname">warehouses</span><span class="tdesc">master gudang</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">code</span><span class="ftype">VARCHAR(30)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">name</span><span class="ftype">VARCHAR(120)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">location</span><span class="ftype">VARCHAR(255)</span></div>
+        </div>
+      </div>
+
+      <div class="table-card inv">
+        <div class="table-name"><span class="tname">stock_cards</span><span class="tdesc">kartu stok</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ items.id">item_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ warehouses.id">warehouse_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">date</span><span class="ftype">TIMESTAMPTZ</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">qty_in, qty_out</span><span class="ftype">NUMERIC</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">balance, ref_doc_id</span><span class="ftype">NUMERIC/UUID</span></div>
+        </div>
+      </div>
+
+      <div class="table-card inv">
+        <div class="table-name"><span class="tname">boms</span><span class="tdesc">bill of material</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ items.id">finished_item_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">version</span><span class="ftype">VARCHAR(20)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">status</span><span class="ftype">VARCHAR(20)</span></div>
+        </div>
+      </div>
+
+      <div class="table-card inv">
+        <div class="table-name"><span class="tname">bom_lines</span><span class="tdesc">komponen BOM</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ boms.id">bom_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ items.id">component_item_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">qty</span><span class="ftype">NUMERIC(18,4)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">unit</span><span class="ftype">VARCHAR(20)</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== DOMAIN 5: BUDGETING ===== -->
+  <section class="domain">
+    <div class="domain-header">
+      <div class="domain-num">5</div>
+      <div class="domain-title">
+        <h2>Budgeting</h2>
+        <div class="desc">Anggaran per departemen × komponen × periode</div>
+      </div>
+      <div class="domain-count">4 tables</div>
+    </div>
+    <div class="tables-grid cols-2">
+
+      <div class="table-card bud">
+        <div class="table-name"><span class="tname">budget_components</span><span class="tdesc">kategori anggaran</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">code, name</span><span class="ftype">VARCHAR</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">type (capex/opex)</span><span class="ftype">VARCHAR(10)</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ accounts.id">account_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">policy_json</span><span class="ftype">JSONB</span></div>
+        </div>
+      </div>
+
+      <div class="table-card bud">
+        <div class="table-name"><span class="tname">budgets</span><span class="tdesc">header anggaran</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ departments.id">department_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ budget_components.id">component_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ fiscal_periods.id">period_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">amount</span><span class="ftype">NUMERIC(18,2)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">status</span><span class="ftype">VARCHAR(20)</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ users.id">approved_by</span><span class="ftype">UUID</span></div>
+        </div>
+      </div>
+
+      <div class="table-card bud">
+        <div class="table-name"><span class="tname">budget_lines</span><span class="tdesc">realisasi anggaran</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ budgets.id">budget_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ transaction_lines.id">transaction_line_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">amount</span><span class="ftype">NUMERIC(18,2)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">type</span><span class="ftype">VARCHAR(15)</span></div>
+        </div>
+      </div>
+
+      <div class="table-card bud">
+        <div class="table-name"><span class="tname">budget_transfers</span><span class="tdesc">transfer antar budget</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ budgets.id">from_budget_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ budgets.id">to_budget_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">amount</span><span class="ftype">NUMERIC(18,2)</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ users.id">approver_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">reason</span><span class="ftype">TEXT</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== DOMAIN 6: OPERATIONS ===== -->
+  <section class="domain">
+    <div class="domain-header">
+      <div class="domain-num">6</div>
+      <div class="domain-title">
+        <h2>Operations & Audit</h2>
+        <div class="desc">Transaksi, audit trail, log reopen periode</div>
+      </div>
+      <div class="domain-count">4 tables</div>
+    </div>
+    <div class="tables-grid cols-2">
+
+      <div class="table-card ops">
+        <div class="table-name"><span class="tname">transactions</span><span class="tdesc">header transaksi</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">type, number</span><span class="ftype">VARCHAR</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">date</span><span class="ftype">TIMESTAMPTZ</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ departments.id">department_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">status</span><span class="ftype">VARCHAR(20)</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">anomaly_flags</span><span class="ftype">JSONB</span></div>
+        </div>
+      </div>
+
+      <div class="table-card ops">
+        <div class="table-name"><span class="tname">transaction_lines</span><span class="tdesc">baris transaksi</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ transactions.id">transaction_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ accounts.id">account_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">debit, credit</span><span class="ftype">NUMERIC(18,2)</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ budgets.id">budget_id</span><span class="ftype">UUID</span></div>
+        </div>
+      </div>
+
+      <div class="table-card ops">
+        <div class="table-name"><span class="tname">audit_logs</span><span class="tdesc">append-only audit</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">timestamp</span><span class="ftype">TIMESTAMPTZ</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ users.id">user_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">action, entity_type</span><span class="ftype">VARCHAR</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">entity_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">before_json, after_json</span><span class="ftype">JSONB</span></div>
+        </div>
+      </div>
+
+      <div class="table-card ops">
+        <div class="table-name"><span class="tname">period_reopen_logs</span><span class="tdesc">audit reopen periode</span></div>
+        <div class="table-body">
+          <div class="field pk"><span class="fbadge">PK</span><span class="fname">id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ fiscal_periods.id">period_id</span><span class="ftype">UUID</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ users.id">user_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">reason</span><span class="ftype">TEXT</span></div>
+          <div class="field fk"><span class="fbadge">FK</span><span class="fname" data-ref="→ users.id">approver_id</span><span class="ftype">UUID</span></div>
+          <div class="field"><span class="fbadge" style="background:#E8EBF1;color:var(--c-muted)">·</span><span class="fname">timestamp</span><span class="ftype">TIMESTAMPTZ</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== RELATIONSHIP MAP ===== -->
+  <section class="relmap">
+    <h3>Cross-Domain Relationship Map <span class="count">28 relasi utama</span></h3>
+    <div class="relmap-grid">
+      <div class="rel-item"><span class="from">users.department_id</span> <span class="arrow">→</span> <span class="to">departments.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">departments.parent_id</span> <span class="arrow">→</span> <span class="to">departments.id</span> <span class="card">N:1 self</span></div>
+      <div class="rel-item"><span class="from">departments.head_user_id</span> <span class="arrow">→</span> <span class="to">users.id</span> <span class="card">1:1</span></div>
+      <div class="rel-item"><span class="from">user_roles.user_id</span> <span class="arrow">→</span> <span class="to">users.id</span> <span class="card">N:M</span></div>
+      <div class="rel-item"><span class="from">user_roles.role_id</span> <span class="arrow">→</span> <span class="to">roles.id</span> <span class="card">N:M</span></div>
+      <div class="rel-item"><span class="from">user_roles.dept_scope_id</span> <span class="arrow">→</span> <span class="to">departments.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">role_permissions.role_id</span> <span class="arrow">→</span> <span class="to">roles.id</span> <span class="card">N:M</span></div>
+      <div class="rel-item"><span class="from">role_permissions.perm_id</span> <span class="arrow">→</span> <span class="to">permissions.id</span> <span class="card">N:M</span></div>
+
+      <div class="rel-item"><span class="from">accounts.parent_id</span> <span class="arrow">→</span> <span class="to">accounts.id</span> <span class="card">N:1 self</span></div>
+      <div class="rel-item"><span class="from">accounts.department_id</span> <span class="arrow">→</span> <span class="to">departments.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">journals.period_id</span> <span class="arrow">→</span> <span class="to">fiscal_periods.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">journal_lines.journal_id</span> <span class="arrow">→</span> <span class="to">journals.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">journal_lines.account_id</span> <span class="arrow">→</span> <span class="to">accounts.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">journal_lines.dept_id</span> <span class="arrow">→</span> <span class="to">departments.id</span> <span class="card">N:1</span></div>
+
+      <div class="rel-item"><span class="from">ar_invoices.customer_id</span> <span class="arrow">→</span> <span class="to">customers.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">ap_invoices.supplier_id</span> <span class="arrow">→</span> <span class="to">suppliers.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">receipts.customer_id</span> <span class="arrow">→</span> <span class="to">customers.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">payments.supplier_id</span> <span class="arrow">→</span> <span class="to">suppliers.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">customers.ar_account_id</span> <span class="arrow">→</span> <span class="to">accounts.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">suppliers.ap_account_id</span> <span class="arrow">→</span> <span class="to">accounts.id</span> <span class="card">N:1</span></div>
+
+      <div class="rel-item"><span class="from">stock_cards.item_id</span> <span class="arrow">→</span> <span class="to">items.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">stock_cards.warehouse_id</span> <span class="arrow">→</span> <span class="to">warehouses.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">boms.finished_item_id</span> <span class="arrow">→</span> <span class="to">items.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">bom_lines.bom_id</span> <span class="arrow">→</span> <span class="to">boms.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">bom_lines.component_item_id</span> <span class="arrow">→</span> <span class="to">items.id</span> <span class="card">N:1</span></div>
+
+      <div class="rel-item"><span class="from">budgets.dept_id</span> <span class="arrow">→</span> <span class="to">departments.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">budgets.component_id</span> <span class="arrow">→</span> <span class="to">budget_components.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">budgets.period_id</span> <span class="arrow">→</span> <span class="to">fiscal_periods.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">budget_lines.budget_id</span> <span class="arrow">→</span> <span class="to">budgets.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">budget_lines.txn_line_id</span> <span class="arrow">→</span> <span class="to">transaction_lines.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">transfers.from_budget_id</span> <span class="arrow">→</span> <span class="to">budgets.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">transfers.to_budget_id</span> <span class="arrow">→</span> <span class="to">budgets.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">budget_components.acct_id</span> <span class="arrow">→</span> <span class="to">accounts.id</span> <span class="card">N:1</span></div>
+
+      <div class="rel-item"><span class="from">transactions.dept_id</span> <span class="arrow">→</span> <span class="to">departments.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">txn_lines.transaction_id</span> <span class="arrow">→</span> <span class="to">transactions.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">txn_lines.account_id</span> <span class="arrow">→</span> <span class="to">accounts.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">txn_lines.budget_id</span> <span class="arrow">→</span> <span class="to">budgets.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">audit_logs.user_id</span> <span class="arrow">→</span> <span class="to">users.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">reopen_logs.period_id</span> <span class="arrow">→</span> <span class="to">fiscal_periods.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">reopen_logs.user_id</span> <span class="arrow">→</span> <span class="to">users.id</span> <span class="card">N:1</span></div>
+      <div class="rel-item"><span class="from">reopen_logs.approver_id</span> <span class="arrow">→</span> <span class="to">users.id</span> <span class="card">N:1</span></div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <div class="erd-footer">
+    <span>GIL · Enterprise Accounting Platform · ERD v1.0</span>
+    <span class="doc-id">DOC-GIL-ERD-001</span>
+  </div>
+
+</div>
+
+</body>
+</html>
